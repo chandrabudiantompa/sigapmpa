@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tes Masuk Karyawan — SIGAP MPA</title>
+<link rel="icon" href="favicon.ico">
+<style>
+  :root{--red:#d60812;--red-dark:#990007;--charcoal:#232529;--muted:#6b7076;--line:#e6e8eb;--green:#168447;--bg:#f4f5f7}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--charcoal);-webkit-tap-highlight-color:transparent}
+  header{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  header .brand{font-weight:900;color:var(--red);font-size:15px}
+  header .progress{font-size:13px;color:var(--muted);font-weight:700}
+  #timer{font-weight:900;font-size:18px;padding:6px 12px;border-radius:10px;background:#eef0f2;color:var(--charcoal);min-width:72px;text-align:center}
+  #timer.warn{background:#fff1cf;color:#7b4400}
+  #timer.danger{background:#ffe3e5;color:var(--red-dark)}
+  main{max-width:640px;margin:0 auto;padding:18px 16px 90px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 26px rgba(0,0,0,.05)}
+  h1{font-size:20px;margin:0 0 6px}
+  h2{font-size:17px;margin:0 0 10px}
+  p{line-height:1.55}
+  .muted{color:var(--muted);font-size:13px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:12px;padding:13px 18px;font-weight:800;font-size:15px;min-height:46px;cursor:pointer;width:100%}
+  .btn.primary{background:linear-gradient(135deg,var(--red),var(--red-dark));color:#fff}
+  .btn.secondary{background:var(--charcoal);color:#fff}
+  .btn.soft{background:#eef0f2;color:var(--charcoal)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn-row{display:flex;gap:10px;margin-top:16px}
+  .btn-row .btn{width:auto;flex:1}
+  ul.rules{padding-left:18px;line-height:1.7}
+  .qnum{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+  .qtext{font-size:19px;font-weight:700;margin:0 0 18px;line-height:1.4}
+  .opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;font-size:15px;font-weight:600;cursor:pointer}
+  .opt b{display:inline-block;width:26px;color:var(--red);font-weight:900}
+  .opt.selected{border-color:var(--red);background:#fff3f3}
+  .navgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:18px 0}
+  .navgrid button{aspect-ratio:1;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted)}
+  .navgrid button.answered{background:#e8f4ee;border-color:var(--green);color:var(--green)}
+  .navgrid button.current{border-color:var(--red);color:var(--red);border-width:2px}
+  .disc-block-label{font-weight:800;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+  table.disc{width:100%;border-collapse:collapse}
+  table.disc th{font-size:11px;text-transform:uppercase;color:var(--muted);padding:4px 6px;text-align:center}
+  table.disc td{padding:10px 6px;border-top:1px solid var(--line);font-size:14px}
+  table.disc td.letter{width:28px;font-weight:900;color:var(--red)}
+  table.disc td.radio{width:60px;text-align:center}
+  table.disc input[type=radio]{width:20px;height:20px}
+  .disc-error{color:var(--red-dark);font-size:13px;font-weight:700;margin:8px 0 0;min-height:18px}
+  #loadingScreen,#errorScreen{display:flex;min-height:70vh;align-items:center;justify-content:center;text-align:center;flex-direction:column;gap:10px;padding:20px}
+  .spinner{width:34px;height:34px;border:4px solid #eee;border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen"><div class="spinner"></div><p class="muted">Memuat tes...</p></div>
+
+<div id="errorScreen" hidden>
+  <h1>Link tidak dapat dibuka</h1>
+  <p id="errorMessage" class="muted">Link tes tidak valid atau sudah kedaluwarsa. Hubungi HR PT Multi Power Abadi untuk mendapatkan link baru.</p>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <span class="brand">SIGAP MPA — Tes Masuk Karyawan</span>
+    <span class="progress" id="headerProgress"></span>
+    <span id="timer" hidden></span>
+  </header>
+  <main id="main"></main>
+</div>
+
+<script>
+'use strict';
+const params=new URLSearchParams(location.search);
+const TOKEN=params.get('t')||'';
+const state={csrf:'',serverOffsetMs:0,phase:null,questions:[],answers:{},index:0,duration:0,startedAt:null,timerId:null};
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+function serverNow(){return new Date(Date.now()+state.serverOffsetMs);}
+function setServerTime(value){if(!value)return;const parsed=new Date(String(value).replace(' ','T')+'+07:00');if(!Number.isNaN(parsed.getTime()))state.serverOffsetMs=parsed.getTime()-Date.now();}
+
+async function api(path,options={}){
+  const headers={'Accept':'application/json',...(options.headers||{})};
+  if(options.body && !(options.body instanceof FormData)){headers['Content-Type']='application/json';options.body=JSON.stringify(options.body);}
+  if((options.method||'GET')!=='GET' && state.csrf) headers['X-CSRF-Token']=state.csrf;
+  const res=await fetch('api'+path,{credentials:'same-origin',cache:'no-store',...options,headers});
+  let data={};try{data=await res.json();}catch{}
+  if(!res.ok){const err=new Error(data.message||`Terjadi kendala (${res.status}).`);err.data=data;err.status=res.status;throw err;}
+  return data;
+}
+
+function showError(message){
+  $('#loadingScreen').hidden=true;$('#app').hidden=true;
+  $('#errorScreen').hidden=false;
+  if(message)$('#errorMessage').textContent=message;
+}
+
+function showApp(){$('#loadingScreen').hidden=true;$('#errorScreen').hidden=true;$('#app').hidden=false;}
+
+function stopTimer(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
+
+function startTimer(startedAtStr,durationMinutes,onExpire){
+  stopTimer();
+  const start=new Date(String(startedAtStr).replace(' ','T')+'+07:00').getTime();
+  const end=start+durationMinutes*60*1000;
+  const el=$('#timer');el.hidden=false;
+  const tick=()=>{
+    const remain=Math.max(0,end-serverNow().getTime());
+    const mm=String(Math.floor(remain/60000)).padStart(2,'0');
+    const ss=String(Math.floor((remain%60000)/1000)).padStart(2,'0');
+    el.textContent=`${mm}:${ss}`;
+    el.classList.toggle('warn',remain<=5*60000 && remain>60000);
+    el.classList.toggle('danger',remain<=60000);
+    if(remain<=0){stopTimer();onExpire();}
+  };
+  tick();
+  state.timerId=setInterval(tick,1000);
+}
+
+async function init(){
+  if(!TOKEN){showError('Link tidak lengkap. Pastikan Anda membuka link tes yang diberikan HR secara utuh.');return;}
+  try{
+    const {data,server_time,csrf}=await api('/public/test/'+encodeURIComponent(TOKEN));
+    state.csrf=csrf;setServerTime(server_time);
+    showApp();
+    render(data);
+  }catch(err){
+    showError(err.status===404?'Link tes tidak ditemukan.':err.status===410?'Link tes sudah kedaluwarsa.':err.message);
+  }
+}
+
+function render(data){
+  if(data.candidate_name)state.candidateName=data.candidate_name;
+  $('#headerProgress').textContent='';
+  $('#timer').hidden=true;
+  stopTimer();
+  if(data.status==='not_started')return renderLanding(data);
+  if(data.status==='iq_in_progress')return renderIQ(data);
+  if(data.status==='iq_completed')return renderTransition(data);
+  if(data.status==='disc_in_progress')return renderDisc(data);
+  if(data.status==='completed')return renderDone();
+  if(data.status==='expired')return showError('Link tes sudah kedaluwarsa. Hubungi HR untuk mendapatkan link baru.');
+  return renderLanding(data);
+}
+
+function renderLanding(data){
+  $('#main').innerHTML=`<div class="card">
+    <h1>Halo, ${esc(data.candidate_name)}</h1>
+    <p class="muted">Posisi dilamar: <strong>${esc(data.applied_position)}</strong></p>
+    <p>Tes ini terdiri dari dua bagian:</p>
+    <ul class="rules">
+      <li><strong>Tes Penalaran (Aptitude)</strong> — ${data.iq_total_questions} soal, waktu ${data.iq_duration_minutes} menit.</li>
+      <li><strong>Tes Kepribadian (DISC)</strong> — ${data.disc_total_questions} blok, waktu ${data.disc_duration_minutes} menit.</li>
+    </ul>
+    <p class="muted">Pastikan koneksi internet stabil. Jawaban tersimpan otomatis. Jangan menutup atau me-refresh halaman selama tes berlangsung. Waktu berjalan otomatis dan tidak dapat dijeda.</p>
+    <button id="startBtn" class="btn primary">Mulai Tes Penalaran (IQ)</button>
+  </div>`;
+  $('#startBtn').onclick=async()=>{
+    $('#startBtn').disabled=true;$('#startBtn').textContent='Memulai...';
+    try{
+      const r=await api('/public/test/'+encodeURIComponent(TOKEN)+'/start-iq',{method:'POST',body:{}});
+      setServerTime(r.server_time);
+      renderIQ({questions:r.data,answers:[],iq_started_at:r.iq_started_at,iq_duration_minutes:r.duration_minutes});
+    }catch(err){alert(err.message);$('#startBtn').disabled=false;$('#startBtn').textContent='Mulai Tes Penalaran (IQ)';}
+  };
+}
+
+function renderIQ(data){
+  state.phase='iq';
+  state.questions=data.questions;
+  state.answers={};
+  (data.answers||[]).forEach(a=>{state.answers[a.question_id]=a.selected_option;});
+  state.index=0;
+  state.startedAt=data.iq_started_at;
+  state.duration=data.iq_duration_minutes;
+  renderIQQuestion();
+  startTimer(state.startedAt,state.duration,()=>{alert('Waktu Tes Penalaran habis. Jawaban Anda otomatis dikirim.');submitIQ(true);});
+}
+
+function renderIQQuestion(){
+  const q=state.questions[state.index];
+  $('#headerProgress').textContent=`Soal ${state.index+1}/${state.questions.length}`;
+  const answeredCount=Object.keys(state.answers).length;
+  $('#main').innerHTML=`<div class="card">
+    <div class="qnum">Soal ${q.question_number} dari ${state.questions.length}</div>
+    <div class="qtext">${esc(q.question_text)}</div>
+    <div id="optList">${q.options.map(o=>`<button type="button" class="opt${state.answers[q.id]===o.label?' selected':''}" data-label="${o.label}"><b>${o.label}.</b> ${esc(o.text)}</button>`).join('')}</div>
+    <div class="btn-row">
+      <button id="prevBtn" class="btn soft" ${state.index===0?'disabled':''}>&larr; Sebelumnya</button>
+      <button id="nextBtn" class="btn soft" ${state.index===state.questions.length-1?'disabled':''}>Berikutnya &rarr;</button>
+    </div>
+    <div class="navgrid">${state.questions.map((qq,i)=>`<button type="button" data-i="${i}" class="${state.answers[qq.id]?'answered ':''}${i===state.index?'current':''}">${qq.question_number}</button>`).join('')}</div>
+    <p class="muted">Terjawab: ${answeredCount} dari ${state.questions.length}</p>
+    <button id="finishIqBtn" class="btn primary">Selesai Tes Penalaran</button>
+  </div>`;
+  $('#optList').onclick=e=>{
+    const b=e.target.closest('.opt');if(!b)return;
+    selectIQAnswer(q.id,b.dataset.label);
+  };
+  $('#prevBtn').onclick=()=>{if(state.index>0){state.index--;renderIQQuestion();}};
+  $('#nextBtn').onclick=()=>{if(state.index<state.questions.length-1){state.index++;renderIQQuestion();}};
+  $('#main').querySelector('.navgrid').onclick=e=>{const b=e.target.closest('button[data-i]');if(b){state.index=Number(b.dataset.i);renderIQQuestion();}};
+  $('#finishIqBtn').onclick=()=>{
+    const unanswered=state.questions.length-Object.keys(state.answers).length;
+    const msg=unanswered>0?`Masih ada ${unanswered} soal belum dijawab. Yakin selesaikan tes IQ sekarang?`:'Selesaikan Tes Penalaran sekarang?';
+    if(confirm(msg))submitIQ(false);
+  };
+}
+
+async function selectIQAnswer(questionId,label){
+  state.answers[questionId]=label;
+  renderIQQuestion();
+  try{await api('/public/test/'+encodeURIComponent(TOKEN)+'/answer-iq',{method:'POST',body:{question_id:questionId,selected_option:label}});}
+  catch(err){alert('Gagal menyimpan jawaban: '+err.message);}
+}
+
+async function submitIQ(silent){
+  stopTimer();
+  try{
+    await api('/public/test/'+encodeURIComponent(TOKEN)+'/submit-iq',{method:'POST',body:{}});
+    renderTransition({});
+  }catch(err){
+    if(!silent)alert(err.message);
+    else location.reload();
+  }
+}
+
+function renderTransition(data){
+  $('#headerProgress').textContent='';
+  $('#main').innerHTML=`<div class="card">
+    <h1>Tes Penalaran selesai</h1>
+    <p>Terima kasih. Selanjutnya adalah Tes Kepribadian (DISC).</p>
+    <ul class="rules">
+      <li>Terdiri dari 24 blok pernyataan.</li>
+      <li>Waktu pengerjaan 15 menit.</li>
+      <li>Setiap blok, pilih 1 pernyataan yang <strong>Paling Mirip</strong> dan 1 yang <strong>Paling Tidak Mirip</strong> dengan diri Anda. Keduanya tidak boleh sama.</li>
+    </ul>
+    <button id="startDiscBtn" class="btn primary">Mulai Tes Kepribadian (DISC)</button>
+  </div>`;
+  $('#startDiscBtn').onclick=async()=>{
+    $('#startDiscBtn').disabled=true;$('#startDiscBtn').textContent='Memulai...';
+    try{
+      const r=await api('/public/test/'+encodeURIComponent(TOKEN)+'/start-disc',{method:'POST',body:{}});
+      setServerTime(r.server_time);
+      renderDisc({questions:r.data,answers:[],disc_started_at:r.disc_started_at,disc_duration_minutes:r.duration_minutes});
+    }catch(err){alert(err.message);$('#startDiscBtn').disabled=false;$('#startDiscBtn').textContent='Mulai Tes Kepribadian (DISC)';}
+  };
+}
+
+function renderDisc(data){
+  state.phase='disc';
+  state.questions=data.questions;
+  state.answers={};
+  (data.answers||[]).forEach(a=>{state.answers[a.question_id]={most:a.most_option,least:a.least_option};});
+  state.index=0;
+  state.startedAt=data.disc_started_at;
+  state.duration=data.disc_duration_minutes;
+  renderDiscBlock();
+  startTimer(state.startedAt,state.duration,()=>{alert('Waktu Tes Kepribadian habis. Jawaban Anda otomatis tersimpan.');submitDisc(true);});
+}
+
+function renderDiscBlock(){
+  const q=state.questions[state.index];
+  const ans=state.answers[q.id]||{};
+  $('#headerProgress').textContent=`Blok ${state.index+1}/${state.questions.length}`;
+  const answeredCount=Object.values(state.answers).filter(a=>a&&a.most&&a.least).length;
+  $('#main').innerHTML=`<div class="card">
+    <div class="disc-block-label">Blok ${q.question_number} dari ${state.questions.length}</div>
+    <table class="disc">
+      <thead><tr><th></th><th></th><th>Mirip</th><th>Tidak Mirip</th></tr></thead>
+      <tbody>${q.options.map(o=>`<tr>
+        <td class="letter">${o.label}</td>
+        <td>${esc(o.text)}</td>
+        <td class="radio"><input type="radio" name="most" value="${o.label}" ${ans.most===o.label?'checked':''}></td>
+        <td class="radio"><input type="radio" name="least" value="${o.label}" ${ans.least===o.label?'checked':''}></td>
+      </tr>`).join('')}</tbody>
+    </table>
+    <div id="discError" class="disc-error"></div>
+    <div class="btn-row">
+      <button id="prevBtn" class="btn soft" ${state.index===0?'disabled':''}>&larr; Sebelumnya</button>
+      <button id="nextBtn" class="btn soft" ${state.index===state.questions.length-1?'disabled':''}>Berikutnya &rarr;</button>
+    </div>
+    <p class="muted">Terjawab: ${answeredCount} dari ${state.questions.length}</p>
+    <button id="finishDiscBtn" class="btn primary" ${answeredCount<state.questions.length?'disabled':''}>Selesai Tes DISC</button>
+  </div>`;
+  const form=$('#main');
+  const applySelection=()=>{
+    const most=form.querySelector('input[name=most]:checked')?.value;
+    const least=form.querySelector('input[name=least]:checked')?.value;
+    if(most && least){
+      if(most===least){
+        $('#discError').textContent='Pilihan Mirip dan Tidak Mirip tidak boleh sama.';
+        return;
+      }
+      $('#discError').textContent='';
+      state.answers[q.id]={most,least};
+      api('/public/test/'+encodeURIComponent(TOKEN)+'/answer-disc',{method:'POST',body:{question_id:q.id,most_option:most,least_option:least}})
+        .then(()=>{
+          const finishBtn=$('#finishDiscBtn');
+          const doneCount=Object.values(state.answers).filter(a=>a&&a.most&&a.least).length;
+          if(finishBtn){finishBtn.disabled=doneCount<state.questions.length;}
+          const p=form.querySelector('p.muted');if(p)p.textContent=`Terjawab: ${doneCount} dari ${state.questions.length}`;
+        })
+        .catch(err=>{$('#discError').textContent='Gagal menyimpan: '+err.message;});
+    }
+  };
+  form.querySelectorAll('input[name=most],input[name=least]').forEach(inp=>inp.addEventListener('change',applySelection));
+  $('#prevBtn').onclick=()=>{if(state.index>0){state.index--;renderDiscBlock();}};
+  $('#nextBtn').onclick=()=>{if(state.index<state.questions.length-1){state.index++;renderDiscBlock();}};
+  $('#finishDiscBtn').onclick=()=>{if(confirm('Selesaikan Tes Kepribadian (DISC) sekarang?'))submitDisc(false);};
+}
+
+async function submitDisc(silent){
+  stopTimer();
+  try{
+    await api('/public/test/'+encodeURIComponent(TOKEN)+'/submit-disc',{method:'POST',body:{}});
+    renderDone();
+  }catch(err){
+    if(!silent)alert(err.message);
+    else location.reload();
+  }
+}
+
+function renderDone(){
+  $('#headerProgress').textContent='';$('#timer').hidden=true;
+  $('#main').innerHTML=`<div class="card">
+    <h1>Tes selesai</h1>
+    <p>Terima kasih${state.candidateName?', '+esc(state.candidateName):''}. Seluruh jawaban Anda sudah tersimpan. Hasil akan diproses oleh tim HR PT Multi Power Abadi.</p>
+  </div>`;
+}
+
+init();
+</script>
+</body>
+</html>

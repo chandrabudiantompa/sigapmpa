@@ -1,0 +1,39 @@
+Options -Indexes
+DirectoryIndex index.html index.php
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+  AddType image/png .png
+</IfModule>
+
+RewriteEngine On
+RewriteCond %{HTTPS} !=on [OR]
+RewriteCond %{HTTP_HOST} ^www\.workforce\.multipowerabadi\.co\.id$ [NC]
+RewriteRule ^ https://workforce.multipowerabadi.co.id%{REQUEST_URI} [R=301,L]
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "same-origin"
+  Header always set Permissions-Policy "geolocation=(self), camera=(), microphone=(), publickey-credentials-get=(self), publickey-credentials-create=(self)"
+  Header always set Strict-Transport-Security "max-age=31536000"
+
+  # Security policy scoped to recruitment pages, not the employee application.
+  <FilesMatch "^(recruitment|aptitude|workstyle)\.html$">
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+  </FilesMatch>
+
+  <FilesMatch "\.(html|js|css|webmanifest)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+  <Files "sw.js">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Service-Worker-Allowed "/"
+  </Files>
+</IfModule>
+
+<FilesMatch "^(README.*|.*\.sql|config\.local\.example\.php|workforce-diagnostic\.php)$">
+  Require all denied
+</FilesMatch>

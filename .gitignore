@@ -1,0 +1,10 @@
+# Rahasia — jangan pernah masuk ke git (password DB, token Telegram, dsb)
+app/config.local.php
+
+# Log server, bukan source code
+api/error_log
+*.log
+
+# OS/editor junk
+.DS_Store
+Thumbs.db

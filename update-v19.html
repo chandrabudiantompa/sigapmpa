@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="id">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Update SIGAP MPA v1.9</title>
+<style>
+body{font-family:Arial,sans-serif;background:#111318;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;padding:24px}
+main{max-width:540px;text-align:center;background:#1f2329;border:1px solid #333943;border-radius:20px;padding:28px;box-shadow:0 20px 70px rgba(0,0,0,.35)}
+button{border:0;border-radius:12px;background:#d60812;color:#fff;padding:13px 18px;font-weight:800}
+small{color:#aeb3bb}
+</style></head>
+<body><main><h1>Memperbarui SIGAP MPA</h1><p>Membersihkan cache lama dan memuat branding final v1.9.</p><button id="go">Buka SIGAP</button><p><small>Jika otomatis belum berpindah, tekan tombol di atas.</small></p></main>
+<script>
+async function clearOld(){
+  try{ if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); } }catch(e){}
+  try{ if('caches' in window){ const keys=await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k))); } }catch(e){}
+}
+document.getElementById('go').onclick=async()=>{await clearOld(); location.href='./?build=1.9.0-final&t='+Date.now();}
+clearOld().then(()=>setTimeout(()=>{location.href='./?build=1.9.0-final&t='+Date.now()},1000));
+</script></body></html>

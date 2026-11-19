@@ -1,0 +1,12 @@
+PATCH SIGAP MPA v1.9.3
+
+Upload dan overwrite:
+- app.js
+- sigap-v08.js
+- index.html
+- sw.js
+- api/index.php
+
+Tidak perlu import SQL.
+Jangan overwrite app/config.local.php produksi. File config.local.example.php hanya referensi.
+Setelah upload, lakukan hard refresh/bersihkan cache PWA.

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SIGAP">
+  <meta name="application-name" content="SIGAP MPA">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="robots" content="noindex,nofollow">
+  <title>SIGAP MPA</title>
+  <link rel="manifest" href="manifest.webmanifest?v=1.11.3">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.11.3">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png?v=1.11.3">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.11.3">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180.png?v=1.11.3">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png?v=1.11.3">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png?v=1.11.3">
+  <script>
+  (function(){
+    var ua=navigator.userAgent||"";
+    var ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+    var standalone=(window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+    if(ios)document.documentElement.classList.add("is-ios");
+    if(standalone)document.documentElement.classList.add("is-standalone");
+  })();
+  </script>
+  <link rel="stylesheet" href="styles.css?v=1.11.3">
+  <link rel="stylesheet" href="sigap-v08.css?v=1.11.3">
+  <script>window.MPA_BUILD="1.11.3";window.SIGAP_UI_VERSION="1.11.3";</script>
+</head>
+<body>
+<div id="toast" class="toast" hidden></div>
+<div id="loading" class="loading" hidden><div class="spinner"></div><span>Memproses…</span></div>
+
+<section id="loginView" class="login-shell sigap-login-shell">
+  <div class="login-card sigap-login-card">
+    <img class="login-logo sigap-full-logo" data-sigap-logo src="assets/sigap-logo-full.png" alt="SIGAP MPA"
+      onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sigap-logo.png'}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/mpa-logo.png'}else{this.onerror=null}">
+    <h1>Masuk ke SIGAP</h1>
+    <p class="muted">Gunakan akun perusahaan untuk mengakses absensi, pengajuan, dan payroll.</p>
+    <form id="loginForm">
+      <label>Username<input id="loginUsername" autocomplete="username" placeholder="Masukkan username" required></label>
+      <label>Password<div class="password-field"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password" required><button id="passwordToggle" class="password-eye" type="button" aria-label="Tampilkan password" aria-pressed="false">◉</button></div></label>
+      <button class="btn primary wide" type="submit">Masuk</button>
+    </form>
+    <div id="sslNotice" class="notice warning" hidden>SSL belum valid. Jangan gunakan data asli sebelum HTTPS aktif.</div>
+    <small>Koneksi terenkripsi · Waktu transaksi menggunakan waktu server</small>
+  </div>
+</section>
+
+<div id="appView" class="app-shell" hidden>
+  <aside class="sidebar">
+    <div class="brand sigap-sidebar-brand">
+      <img class="sigap-sidebar-logo" data-sigap-logo src="assets/sigap-logo-full.png" alt="SIGAP MPA"
+        onerror="if(!this.dataset.f1){this.dataset.f1='1';this.src='assets/sigap-logo.png'}else if(!this.dataset.f2){this.dataset.f2='1';this.src='assets/mpa-logo.png'}else{this.onerror=null}">
+      <div><strong>SIGAP MPA</strong><span>Sistem Internal</span></div>
+      <button id="sidebarClose" class="drawer-close" type="button" aria-label="Tutup menu">×</button>
+    </div>
+    <nav id="mainNav"></nav>
+    <div class="side-foot"><span id="serverBadge" class="badge">Server</span><button id="logoutBtn" class="btn ghost wide">Keluar</button></div>
+  </aside>
+  <div id="navBackdrop" class="nav-backdrop" hidden></div>
+  <main class="main">
+    <header class="topbar sigap-topbar">
+      <button id="menuBtn" class="icon-btn menu-trigger" type="button" aria-label="Buka menu" aria-controls="mainNav" aria-expanded="false">☰</button>
+      <div class="topbar-copy"><h2 id="pageTitle">Dashboard</h2><p id="pageSubtitle" class="muted"></p></div>
+      <div class="user-box"><div class="avatar sigap-app-avatar" id="avatar"><img src="icons/topbar-logo.png?v=1.11.3" alt="SIGAP"></div><div><strong id="userName"></strong><span id="userRole"></span></div></div>
+    </header>
+    <section id="content" class="content"></section>
+  </main>
+</div>
+
+<dialog id="modal" class="modal"><div class="modal-card"><div class="modal-head"><h3 id="modalTitle">Form</h3><button id="modalClose" class="icon-btn" type="button">×</button></div><div id="modalBody"></div></div></dialog>
+
+<script src="xlsx-export.js?v=1.11.3"></script>
+<script src="app.js?v=1.11.3"></script>
+<script src="sigap-v08.js?v=1.11.3"></script>
+</body>
+</html>
