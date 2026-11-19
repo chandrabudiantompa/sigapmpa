@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/u6066544/public_html/sigap.multipowerabadi.co.id/
+    - /usr/bin/rsync -a --exclude='.git' --exclude='.gitignore' --exclude='.cpanel.yml' ./ $DEPLOYPATH
