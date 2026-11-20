@@ -1955,7 +1955,7 @@ try {
     if ($path === '/health' && $httpMethod === 'GET') {
         $count = (int)db()->query('SELECT COUNT(*) FROM users')->fetchColumn();
         global $config;
-        json_response(['ok' => true, 'app' => (string)($config['app']['name'] ?? 'SIGAP MPA'), 'version' => '1.11.3', 'deploy_channel' => 'github-cpanel', 'database' => true, 'installed' => $count > 0, 'server_time' => now_sql()]);
+        json_response(['ok' => true, 'app' => (string)($config['app']['name'] ?? 'SIGAP MPA'), 'version' => '1.11.3', 'deploy_channel' => 'manual-upload', 'database' => true, 'installed' => $count > 0, 'server_time' => now_sql()]);
     }
 
     if ($path === '/auth/login' && $httpMethod === 'POST') {
